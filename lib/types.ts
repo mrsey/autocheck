@@ -45,6 +45,8 @@ export interface Recall {
 export interface History {
   source: "live" | "demo";
   providerNote: string;
+  /** false when the source (e.g. UK MOT) carries no accident records */
+  accidentsCovered: boolean;
   events: HistoryEvent[];
 }
 

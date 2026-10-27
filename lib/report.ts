@@ -4,7 +4,7 @@ import { decodeVin, getComplaintCount, getRecalls } from "./nhtsa";
 import type { Report } from "./types";
 import { checkDigitOk, isValidVinFormat, normalizeVin } from "./vin";
 
-export async function buildReport(rawVin: string): Promise<Report> {
+export async function buildReport(rawVin: string, plate?: string): Promise<Report> {
   const vin = normalizeVin(rawVin);
   if (!isValidVinFormat(vin)) throw new Error("Invalid VIN: must be 17 characters (letters except I, O, Q, and digits).");
 
@@ -16,7 +16,7 @@ export async function buildReport(rawVin: string): Promise<Report> {
   const [recalls, complaintCount, history] = await Promise.all([
     getRecalls(vehicle),
     getComplaintCount(vehicle),
-    getHistory(vin, vehicle.plantCountry),
+    getHistory(vin, vehicle.plantCountry, plate),
   ]);
 
   const countries = [...new Set(history.events.map((e) => e.country))];

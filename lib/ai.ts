@@ -49,6 +49,7 @@ export async function aiAssessment(f: Facts): Promise<AiAssessment> {
   const payload = {
     vehicle: f.vehicle,
     historySource: f.history.source,
+    accidentRecordsCovered: f.history.accidentsCovered,
     events: f.history.events,
     countries: f.countries,
     recallCount: f.recalls.length,
@@ -71,7 +72,7 @@ export async function aiAssessment(f: Facts): Promise<AiAssessment> {
         max_tokens: 900,
         system:
           "You are a used-car inspection analyst. Given structured vehicle history data, assess buyer risk. " +
-          "Only use the provided data; never invent records. If historySource is 'demo', say the data is sample data. " +
+          "Only use the provided data; never invent records. If historySource is 'demo', say the data is sample data. If accidentRecordsCovered is false, never imply the car is accident-free. " +
           'Reply with ONLY JSON: {"riskScore":0-100,"summary":"2-4 sentences","flags":["..."],"buyerAdvice":["..."]}',
         messages: [{ role: "user", content: JSON.stringify(payload) }],
       }),

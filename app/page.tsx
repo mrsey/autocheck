@@ -8,6 +8,7 @@ const SAMPLES = ["1HGCM82633A004352", "5YJSA1E26HF000337", "WBA3A5C51CF256651"];
 export default function Home() {
   const router = useRouter();
   const [vin, setVin] = useState("");
+  const [plate, setPlate] = useState("");
   const [err, setErr] = useState("");
 
   function submit(e: React.FormEvent) {
@@ -17,7 +18,8 @@ export default function Home() {
       setErr("Enter a valid 17-character VIN (no I, O or Q).");
       return;
     }
-    router.push(`/report/${v}`);
+    const p = plate.replace(/\s+/g, "").toUpperCase();
+    router.push(`/report/${v}${p ? `?plate=${encodeURIComponent(p)}` : ""}`);
   }
 
   return (
@@ -35,6 +37,14 @@ export default function Home() {
         />
         <button type="submit">Check vehicle</button>
       </form>
+      <input
+        className="plate"
+        value={plate}
+        onChange={(e) => setPlate(e.target.value)}
+        placeholder="UK number plate (optional) - adds real MOT mileage history"
+        maxLength={10}
+        aria-label="UK number plate"
+      />
       {err && <p className="err">{err}</p>}
       <p className="samples">
         Try:{" "}

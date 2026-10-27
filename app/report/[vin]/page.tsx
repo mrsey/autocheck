@@ -14,11 +14,18 @@ function Spec({ k, v }: { k: string; v: string }) {
   return v ? <div className="spec"><span>{k}</span><b>{v}</b></div> : null;
 }
 
-export default async function ReportPage({ params }: { params: Promise<{ vin: string }> }) {
+export default async function ReportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ vin: string }>;
+  searchParams: Promise<{ plate?: string }>;
+}) {
   const { vin } = await params;
+  const { plate } = await searchParams;
   let r: Report;
   try {
-    r = await buildReport(vin);
+    r = await buildReport(vin, plate);
   } catch (e) {
     return <section className="card"><h2>Could not build report</h2><p className="err">{(e as Error).message}</p><a href="/">Back</a></section>;
   }
@@ -30,7 +37,11 @@ export default async function ReportPage({ params }: { params: Promise<{ vin: st
       <h1>{[v.year, v.make, v.model].filter(Boolean).join(" ") || "Unknown vehicle"}</h1>
       <p className="vin">{v.vin}</p>
 
-      {r.history.source === "demo" && <div className="banner">{r.history.providerNote}</div>}
+      {r.history.source === "demo" ? (
+        <div className="banner">{r.history.providerNote}</div>
+      ) : (
+        !r.history.accidentsCovered && <div className="banner info">{r.history.providerNote}</div>
+      )}
 
       <section className={`card verdict ${tone}`}>
         <div className="score"><b>{r.ai.riskScore}</b><span>/100 risk</span></div>
@@ -55,7 +66,7 @@ export default async function ReportPage({ params }: { params: Promise<{ vin: st
           <h2>Countries ({r.countries.length})</h2>
           <div className="chips">{r.countries.map((c) => <span key={c} className="chip">{countryName(c)}</span>)}</div>
           <h2>Accidents ({r.accidents.length})</h2>
-          {r.accidents.length === 0 ? <p>No accident records found.</p> : (
+          {r.accidents.length === 0 ? <p>{r.history.accidentsCovered ? "No accident records found." : "Not available - this data source has no accident records."}</p> : (
             <ul className="plain">{r.accidents.map((a, i) => (
               <li key={i}><b className={`sev ${a.severity}`}>{a.severity}</b> {a.date} · {countryName(a.country)} — {a.detail}</li>
             ))}</ul>

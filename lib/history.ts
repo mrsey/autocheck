@@ -1,3 +1,4 @@
+import { getMotEvents, motConfigured } from "./mot";
 import type { EventType, History, HistoryEvent } from "./types";
 
 /**
@@ -11,7 +12,23 @@ import type { EventType, History, HistoryEvent } from "./types";
  * Without credentials the app runs in DEMO mode with deterministic, clearly
  * labelled SAMPLE data so the UI and AI analysis can be evaluated.
  */
-export async function getHistory(vin: string, plantCountryHint: string): Promise<History> {
+export async function getHistory(vin: string, plantCountryHint: string, plate?: string): Promise<History> {
+  // Free real source: UK MOT history (mileage + test results, no accident data).
+  if (plate && motConfigured()) {
+    try {
+      const events = await getMotEvents(plate);
+      if (events.length) {
+        return {
+          source: "live",
+          accidentsCovered: false,
+          providerNote: "UK MOT history (DVSA). Mileage and test results are real; accident records are not covered by this source.",
+          events,
+        };
+      }
+    } catch {
+      /* fall through */
+    }
+  }
   const url = process.env.HISTORY_API_URL;
   if (url) {
     try {
@@ -23,7 +40,7 @@ export async function getHistory(vin: string, plantCountryHint: string): Promise
       });
       if (res.ok) {
         const events = normalize(await res.json());
-        return { source: "live", providerNote: "Data from configured history provider.", events };
+        return { source: "live", accidentsCovered: true, providerNote: "Data from configured history provider.", events };
       }
     } catch {
       /* fall through to demo */
@@ -31,6 +48,7 @@ export async function getHistory(vin: string, plantCountryHint: string): Promise
   }
   return {
     source: "demo",
+    accidentsCovered: true,
     providerNote:
       "DEMO MODE: history, accident and country data below is generated SAMPLE data, not real records. Configure HISTORY_API_URL to use a real provider.",
     events: demoEvents(vin, plantCountryHint),
